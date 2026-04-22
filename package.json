@@ -1,0 +1,118 @@
+{
+  "name": "nest-prisma-template",
+  "version": "0.0.1",
+  "description": "NestJS + Prisma template",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "prisma generate && npm run generate_swagger && nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "node dist/main.js",
+    "start:dev": "prisma generate && npm run generate_swagger && nest start --watch",
+    "start:debug": "prisma generate && npm run generate_swagger &&nest start --debug --watch",
+    "start:prod": "prisma generate && npm run generate_swagger && node dist/src/main",
+    "generate_swagger": "ts-node -r tsconfig-paths/register src/generate-swagger.ts",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "format_schema": "npx prisma format --schema ./prisma/schema.prisma",
+    "========== Testing ==========": "",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "==========  Database ==========": "",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:seed-gas": "ts-node prisma/seed-gas.ts",
+    "prisma:delete-excel-uploads": "ts-node prisma/delete-excel-uploads.ts",
+    "prisma:delete-excel-gas": "ts-node prisma/delete-excel-gas.ts",
+    "create_migration": "prisma migrate dev --create-only",
+    "migrate": "prisma migrate deploy",
+    "reset": "prisma migrate reset",
+    "reset:skip_seed": "prisma migrate reset --skip-seed",
+    "generate_types": "prisma generate",
+    "migrate_diff": "prisma migrate diff"
+  },
+  "dependencies": {
+    "@gboutte/nestjs-hbs": "^0.2.0",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.1.3",
+    "@nestjs/schedule": "^6.0.1",
+    "@nestjs/swagger": "^11.2.0",
+    "@nestjs/websockets": "^11.1.3",
+    "@prisma/client": "^6.19.0",
+    "axios": "^1.12.2",
+    "axios-retry": "^4.5.0",
+    "bcryptjs": "^3.0.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.19",
+    "fast-xml-parser": "^5.2.5",
+    "luxon": "^3.7.2",
+    "nest-puppeteer": "^3.1.1",
+    "puppeteer": "^24.35.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "3.23.8",
+    "xml2js": "^0.6.2",
+    "xmlbuilder2": "^3.1.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@prisma/internals": "^6.19.0",
+    "@swc/cli": "^0.6.0",
+    "@swc/core": "^1.10.7",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.18.6",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.4.2",
+    "prisma": "^6.19.0",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "tsconfig.spec.json"
+      }
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
+
