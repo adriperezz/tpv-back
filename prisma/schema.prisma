@@ -1,13 +1,162 @@
-// ---------------------------------------- INFO CLIENT ----------------------------------------
- 
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
-  provider          = "sqlserver"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
- 
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Rol {
+  ADMIN
+  TAQUILLA
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+}
+
+enum EstadoVenta {
+  ACTIVA
+  ANULADA
+}
+
+// ─── Modelos ──────────────────────────────────────────────────────────────────
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @unique
+  pin       String   // bcrypt hash
+  rol       Rol
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  ventas                   Venta[]      @relation("UsuarioVentas")
+  sesiones                 SesionCaja[] @relation("UsuarioSesiones")
+  logAcciones              LogAccion[]  @relation("UsuarioLog")
+  invitacionesSolicitadas  Invitacion[] @relation("Solicitante")
+  invitacionesBeneficiario Invitacion[] @relation("Beneficiario")
+  invitacionesFirmadas     Invitacion[] @relation("Firmante")
+}
+
+model TipoTicket {
+  id            Int    @id @default(autoincrement())
+  nombre        String @unique // COPA, CERVEZA_REFRESCO
+  color         String          // hex color p.ej. #F5C518
+  contadorSerie Int    @default(0)
+
+  tickets         TicketFisico[]
+  productoTickets ProductoTicket[]
+}
+
+model Producto {
+  id        Int     @id @default(autoincrement())
+  nombre    String  @unique
+  precio    Decimal @db.Decimal(10, 2)
+  activo    Boolean @default(true)
+
+  productoTickets ProductoTicket[]
+  lineasVenta     LineaVenta[]
+}
+
+// Qué tickets genera cada producto al venderse
+model ProductoTicket {
+  id           Int @id @default(autoincrement())
+  productoId   Int
+  tipoTicketId Int
+  cantidad     Int @default(1)
+
+  producto   Producto   @relation(fields: [productoId], references: [id])
+  tipoTicket TipoTicket @relation(fields: [tipoTicketId], references: [id])
+
+  @@unique([productoId, tipoTicketId])
+}
+
+model Venta {
+  id         Int         @id @default(autoincrement())
+  metodoPago MetodoPago
+  taquilla   Int         // número de taquilla física (1, 2, 3)
+  usuarioId  Int
+  estado     EstadoVenta @default(ACTIVA)
+  timestamp  DateTime    @default(now())
+
+  usuario     Usuario        @relation("UsuarioVentas", fields: [usuarioId], references: [id])
+  lineas      LineaVenta[]
+  tickets     TicketFisico[]
+  logAcciones LogAccion[]
+}
+
+model LineaVenta {
+  id             Int     @id @default(autoincrement())
+  ventaId        Int
+  productoId     Int
+  nombreSnapshot String  // nombre del producto en el momento de la venta
+  cantidad       Int
+  precioUnitario Decimal @db.Decimal(10, 2)
+  subtotal       Decimal @db.Decimal(10, 2)
+
+  venta    Venta    @relation(fields: [ventaId], references: [id])
+  producto Producto @relation(fields: [productoId], references: [id])
+}
+
+model TicketFisico {
+  id           Int      @id @default(autoincrement())
+  tipoTicketId Int
+  numeroSerie  Int      // contador global por tipo, nunca se resetea
+  ventaId      Int?     // null si es de invitación
+  invitacionId Int?
+  taquilla     Int
+  esInvitacion Boolean  @default(false)
+  timestamp    DateTime @default(now())
+
+  tipoTicket TipoTicket  @relation(fields: [tipoTicketId], references: [id])
+  venta      Venta?      @relation(fields: [ventaId], references: [id])
+  invitacion Invitacion? @relation(fields: [invitacionId], references: [id])
+}
+
+model SesionCaja {
+  id        Int       @id @default(autoincrement())
+  taquilla  Int
+  usuarioId Int
+  apertura  DateTime  @default(now())
+  cierre    DateTime?
+  snapshot  Json?     // totales guardados al hacer el cierre (parte Z)
+
+  usuario Usuario @relation("UsuarioSesiones", fields: [usuarioId], references: [id])
+}
+
+model Invitacion {
+  id             Int      @id @default(autoincrement())
+  solicitanteId  Int
+  beneficiarioId Int
+  firmanteId     Int?
+  nCopas         Int
+  comentario     String?
+  firmado        Boolean  @default(false)
+  timestamp      DateTime @default(now())
+
+  solicitante  Usuario        @relation("Solicitante", fields: [solicitanteId], references: [id])
+  beneficiario Usuario        @relation("Beneficiario", fields: [beneficiarioId], references: [id])
+  firmante     Usuario?       @relation("Firmante", fields: [firmanteId], references: [id])
+  tickets      TicketFisico[]
+}
+
+model LogAccion {
+  id          Int      @id @default(autoincrement())
+  usuarioId   Int
+  accion      String   // ANULAR_VENTA, CORREGIR_METODO_PAGO, FIRMAR_INVITACION, etc.
+  entidad     String   // Venta, Invitacion, etc.
+  entidadId   Int?
+  ventaId     Int?
+  datoAntes   Json?
+  datoDespues Json?
+  timestamp   DateTime @default(now())
+
+  usuario Usuario @relation("UsuarioLog", fields: [usuarioId], references: [id])
+  venta   Venta?  @relation(fields: [ventaId], references: [id])
+}

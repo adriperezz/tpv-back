@@ -1,4 +1,4 @@
-export type Functionality = string;
-
-type Functionalities = Array<Functionality>;
-
+export enum Rol {
+  ADMIN = 'ADMIN',
+  TAQUILLA = 'TAQUILLA',
+}

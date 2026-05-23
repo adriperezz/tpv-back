@@ -1,59 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { hash } from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  // TODO: añadir tipo que devuelve
-  async findOneWithPassword(email: string) {
-    return await this.prisma.user.findUnique({
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        password: true,
-        // TODO: adaptar según el modelo de roles de cada proyecto
-        // role: {
-        //   select: {
-        //     functionalities: {
-        //       select: {
-        //         functionality: {
-        //           select: {
-        //             name: true,
-        //           },
-        //         },
-        //       },
-        //     },
-        //   },
-        // },
-      },
-      where: {
-        email,
-      },
+  findAll() {
+    return this.prisma.usuario.findMany({
+      where: { activo: true },
+      select: { id: true, nombre: true, rol: true },
+      orderBy: { nombre: 'asc' },
     });
   }
 
-  async signUpUser(
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string,
-    roleId: number,
-  ) {
-    const passwordHash = await hash(password, 10);
-
-    await this.prisma.user.create({
-      data: {
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        password: passwordHash,
-        roleId,
-      },
+  findByIdWithPin(id: number) {
+    return this.prisma.usuario.findUnique({
+      where: { id },
+      select: { id: true, nombre: true, pin: true, rol: true, activo: true },
     });
   }
 }
-

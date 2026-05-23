@@ -1,54 +1,53 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Request,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request, UnauthorizedException } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
-import { SignInData } from './entities/signin.dto';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ApiAuthExceptionResponses, ApiLoginResponses } from 'src/common/decorators/code-responses.decorator';
+import { SignInDto } from './entities/signin.dto';
+import { UsersService } from '../users/users.service';
 
-@ApiAuthExceptionResponses()
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private usersService: UsersService,
+  ) {}
 
   @Public()
   @Post('login')
-  @ApiBody({ type: SignInData })
-  @ApiOperation({ summary: 'Iniciar sesión del usuario' })
-  @ApiLoginResponses()
-  @ApiResponse({
-    description: 'User logged succesfully',
-    status: HttpStatus.CREATED
-  })
-  signIn(@Body() signInDto: SignInData) {
-    return this.authService.signIn(signInDto.email, signInDto.password);
+  @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: SignInDto })
+  @ApiOperation({ summary: 'Login con ID de usuario y PIN' })
+  @ApiResponse({ status: 200, description: 'Token JWT + datos del usuario' })
+  signIn(@Body() dto: SignInDto) {
+    return this.authService.signIn(dto.usuarioId, dto.pin);
+  }
+
+  @Public()
+  @Get('usuarios')
+  @ApiOperation({ summary: 'Lista de usuarios activos para la pantalla de login' })
+  @ApiResponse({ status: 200, description: 'Array de {id, nombre, rol}' })
+  getUsuarios() {
+    return this.usersService.findAll();
   }
 
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refrescar token de acceso' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Token refrescado exitosamente',
-  })
-  async refreshToken(@Request() req) {
-    const token = this.extractTokenFromHeader(req);
-    if (!token) {
-      throw new UnauthorizedException('No se proporcionó token');
-    }
+  refreshToken(@Request() req: any) {
+    const [type, token] = req.headers.authorization?.split(' ') ?? [];
+    if (type !== 'Bearer' || !token) throw new UnauthorizedException();
     return this.authService.refreshToken(token);
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers['authorization']?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+  @Post('validar-pin-admin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Valida PIN de un admin para operaciones protegidas' })
+  @ApiBody({ schema: { properties: { usuarioId: { type: 'number' }, pin: { type: 'string' } } } })
+  async validarPinAdmin(@Body() body: { usuarioId: number; pin: string }) {
+    const ok = await this.authService.validarPinAdmin(body.usuarioId, body.pin);
+    if (!ok) throw new UnauthorizedException('PIN de admin incorrecto');
+    return { ok: true };
   }
 }
