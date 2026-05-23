@@ -37,14 +37,19 @@ export class SesionesCajaService {
 
     const resumen = await this.buildResumen(sesion.apertura, new Date(), taquilla);
 
-    const arqueoCash = dto.arqueo
-      ? dto.arqueo.reduce((sum, b) => sum + b.denominacion * b.cantidad, 0)
-      : null;
+    const { realEfectivo = null, realTarjeta = null, realTransferencia = null } = dto;
+
+    const descuadre = (real: number | null, teorico: number) =>
+      real !== null ? +(real - teorico).toFixed(2) : null;
 
     const snapshot = {
       ...resumen,
-      arqueoCash,
-      diferencia: arqueoCash !== null ? arqueoCash - (resumen.totalEfectivo ?? 0) : null,
+      realEfectivo,
+      realTarjeta,
+      realTransferencia,
+      descuadreEfectivo: descuadre(realEfectivo, resumen.totalEfectivo),
+      descuadreTarjeta: descuadre(realTarjeta, resumen.totalTarjeta),
+      descuadreTransferencia: descuadre(realTransferencia, resumen.totalTransferencia),
       cerradoPor: usuarioId,
     };
 

@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsArray, IsInt, IsNumber, IsOptional, Min, ValidateNested } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, Min } from 'class-validator';
 
 export class AbrirSesionDto {
   @ApiProperty({ example: 1 })
@@ -9,22 +8,19 @@ export class AbrirSesionDto {
   taquilla!: number;
 }
 
-export class BilleteMDto {
-  @ApiProperty({ example: 50 })
-  @IsNumber()
-  denominacion!: number;
-
-  @ApiProperty({ example: 3 })
-  @IsInt()
-  @Min(0)
-  cantidad!: number;
-}
-
 export class CerrarSesionDto {
-  @ApiPropertyOptional({ type: [BilleteMDto], description: 'Arqueo manual de efectivo' })
+  @ApiPropertyOptional({ description: 'Efectivo real contado en caja (€)' })
   @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => BilleteMDto)
-  arqueo?: BilleteMDto[];
+  @IsNumber()
+  realEfectivo?: number;
+
+  @ApiPropertyOptional({ description: 'Importe real cobrado por tarjeta (€)' })
+  @IsOptional()
+  @IsNumber()
+  realTarjeta?: number;
+
+  @ApiPropertyOptional({ description: 'Importe real cobrado por transferencia (€)' })
+  @IsOptional()
+  @IsNumber()
+  realTransferencia?: number;
 }
