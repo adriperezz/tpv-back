@@ -11,4 +11,10 @@ export class AppController {
   getHealth() {
     return this.appService.getHealth();
   }
+
+  @Public()
+  @Get('sistema/tiempo')
+  getTiempo() {
+    return { ahora: new Date().toISOString() };
+  }
 }
