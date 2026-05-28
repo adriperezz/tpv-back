@@ -25,7 +25,7 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   const config = new DocumentBuilder()
-    .setTitle('TPV Corpus — API')
+    .setTitle('TPV Patio Nazarí — API')
     .setDescription('API del Terminal Punto de Venta para la caseta de feria')
     .setVersion('1.0')
     .addBearerAuth(

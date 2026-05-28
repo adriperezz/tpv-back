@@ -34,6 +34,16 @@ export class CobrarVentaDto {
   @IsOptional()
   @IsNumber()
   efectivoEntregado?: number;
+
+  @ApiPropertyOptional({ example: '192.168.1.101', description: 'IP de la impresora ESC/POS (puerto 9100)' })
+  @IsOptional()
+  @IsString()
+  impresoraIp?: string;
+
+  @ApiPropertyOptional({ example: 'Viernes 6 Junio 2026', description: 'Fecha del evento para el ticket impreso' })
+  @IsOptional()
+  @IsString()
+  fechaEvento?: string;
 }
 
 export class AnularVentaDto {

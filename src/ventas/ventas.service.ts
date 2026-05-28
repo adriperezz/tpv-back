@@ -7,6 +7,7 @@ import {
 import { MetodoPago } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma.service';
+import { PrinterService } from 'src/printer/printer.service';
 import { AnularVentaDto, CobrarVentaDto, CorregirMetodoPagoDto } from './dto/ventas.dto';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class VentasService {
   constructor(
     private prisma: PrismaService,
     private authService: AuthService,
+    private printer: PrinterService,
   ) {}
 
   async cobrar(dto: CobrarVentaDto, usuarioId: number) {
@@ -81,7 +83,7 @@ export class VentasService {
       }
 
       // Retorna venta completa con tickets
-      return tx.venta.findUnique({
+      const resultado = await tx.venta.findUnique({
         where: { id: venta.id },
         include: {
           lineas: true,
@@ -89,6 +91,14 @@ export class VentasService {
           usuario: { select: { id: true, nombre: true } },
         },
       });
+
+      if (resultado && resultado.tickets.length > 0) {
+        const tipos = resultado.tickets.map((t) => t.tipoTicket.nombre);
+        const buf = this.printer.buildTickets(tipos);
+        this.printer.dispararImpresion(dto.impresoraIp, buf);
+      }
+
+      return resultado;
     });
   }
 
